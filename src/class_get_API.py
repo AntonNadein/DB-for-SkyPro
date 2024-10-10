@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List
 
 import requests
 
@@ -22,9 +23,7 @@ class ParserHH(ABCParser):
         else:
             raise TypeError("Текст поиска должен быть 'str'")
         self.url = "https://api.hh.ru/vacancies"
-        self.params = {
-            "text": self.search_text,
-        }
+        self.params = {"text": self.search_text, "per_page": 30, "page": 0}
 
     def __get_vacancies(self):
         """Функция поиска вакансий по API"""
@@ -52,7 +51,7 @@ class ParserHH(ABCParser):
             print("Запрос не был успешным.")
 
     @property
-    def get_vacancies(self):
+    def get_vacancies(self) -> List[Dict[str, Any]]:
         """Функция вывода вакансий найденых по API"""
         return self.__get_vacancies()
 
@@ -77,18 +76,19 @@ class HeadHunterAPI(ParserHH):
         except AttributeError:
             print("Произошла ошибка.")
 
-    def __get_employer_list_id(self) -> list:
+    def __get_employer_list_id(self) -> List[Dict[str, Any]]:
+        """Функция получения информации о компаниях"""
         self.list_id = []
         response_employer_id = self.__get_employer_id()
         for employer_id in response_employer_id:
             self.list_id.append(employer_id["id"])
         return self.list_id
 
-    def get_vacancies_from_employer_id(self):
+    def get_vacancies_from_employer_id(self) -> list:
         """Функция получения вакансий из списка id компаний"""
         list_d = []
-        for id in self.__get_employer_list_id():
-            self.params = {"employer_id": id}
+        for emp_id in self.__get_employer_list_id():
+            self.params = {"employer_id": emp_id, "per_page": 100}
             list_d.extend(self.get_vacancies)
         return list_d
 
@@ -96,9 +96,3 @@ class HeadHunterAPI(ParserHH):
     def get_employer_list_id(self):
         """Функция вывода списка id найденых компаний"""
         return self.__get_employer_list_id()
-
-
-# hh_api = HeadHunterAPI("Россети Сибирь")
-hh_api = HeadHunterAPI("Россети Сибирь")  # 63806 10917456
-s = hh_api.get_vacancies_from_employer_id()
-print(s)
