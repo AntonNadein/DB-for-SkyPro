@@ -6,21 +6,31 @@ import psycopg2
 from src.class_get_API import HeadHunterAPI
 
 
-class ABCManagerDB(ABC):
-    """Абстрактный класс поиска вакансий."""
+class ABCDataBase(ABC):
+    """Абстрактный класс для базы данных."""
 
     @abstractmethod
-    def create_table(self):
+    def connect_data_base(self):
         pass
 
 
-class DBCreate(ABCManagerDB):
+class DataBase(ABCDataBase):
+    """Класс для подключения к базе данных."""
+
+    def connect_data_base(self) -> None:
+        """Функция для создания подключения к базе данных"""
+        self.conn = psycopg2.connect(host="", database="", user="", password="")
+
+
+class DBCreate(DataBase):
     """Класс для создания базы данных вакансий."""
+
+    data: List[Dict[str, Any]]
 
     def __init__(self, data: List[Dict[str, Any]]) -> None:
         self.data = data
 
-    def create_table(self) -> None:
+    def create_tabl(self) -> None:
         """Функция для создания таблицы в базе данных"""
         self.connect_data_base()
         with self.conn.cursor() as cur:
@@ -81,13 +91,123 @@ class DBCreate(ABCManagerDB):
             cur.close()
             self.conn.close()
 
-    def connect_data_base(self):
-        """Функция для создания подключения к базе данных"""
-        self.conn = psycopg2.connect(host="", database="", user="", password="")
+
+class DBManager(DataBase):
+    """Класс взаимодействия с базой данных вакансий."""
+
+    def get_companies_and_vacancies_count(self) -> None:
+        """Функция возвращает список всех компаний и
+        количество вакансий у каждой компании"""
+        self.connect_data_base()
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT company_name, COUNT(*) FROM vacancies GROUP BY company_name")
+
+            rows = cur.fetchall()
+            print("Список всех компаний и количество вакансий у каждой компании")
+            print("--- " * 15)
+            for row in rows:
+                print(f"Компания: {row[0]} " f"Вакансий: {row[1]}")
+
+            cur.close()
+            self.conn.close()
+
+    def get_all_vacancies(self) -> None:
+        """Функция возвращает список всех вакансий с указанием названия компании,
+        названия вакансии и зарплаты и ссылки на вакансию"""
+        self.connect_data_base()
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT company_name, vacancies_name, salary_from, salary_to, vacancies_url FROM vacancies")
+
+            rows = cur.fetchall()
+            print("Список всех вакансий")
+            print("--- " * 15)
+            for row in rows:
+                if row[2] is None and row[3] is None:
+                    salary = "Зарплата не указана"
+                elif type(row[2]) is int and row[3] is None:
+                    salary = f"Зарплата от {row[2]}"
+                elif row[2] is None and type(row[3]) is int:
+                    salary = f"Зарплата до {row[3]}"
+                else:
+                    salary = f"Зарплата от {row[2]} до {row[3]}"
+                print(f"Компания: {row[0]} " f"Количаство вакансий: {row[1]} " f"{salary} " f"URL: {row[4]} ")
+
+            cur.close()
+            self.conn.close()
+
+    def get_avg_salary(self) -> None:
+        """Функция возвращает среднюю зарплату по вакансиям"""
+        self.connect_data_base()
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "SELECT vacancies_name, (avg(salary_from) + avg(salary_to))/2 as avg_salary "
+                "FROM vacancies "
+                "GROUP BY vacancies_name "
+                "HAVING (avg(salary_from) is not null and avg(salary_to) is not null)"
+            )
+            rows = cur.fetchall()
+            print("Средняя зарплата по вакансиям")
+            print("--- " * 15)
+            for row in rows:
+                print(f"Вакансия: {row[0]} " f"Средняя зарплата: {round(row[1])}")
+
+            cur.close()
+            self.conn.close()
+
+    def get_vacancies_with_higher_salary(self) -> None:
+        """Функция возвращает список всех вакансий,
+        у которых зарплата выше средней по всем вакансиям"""
+        self.connect_data_base()
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM vacancies "
+                "WHERE (salary_from + salary_to)/2 > "
+                "(SELECT (avg(salary_from) + avg(salary_to))/2 as avg_salary FROM vacancies)"
+            )
+
+            rows = cur.fetchall()
+            print("Вакансии у которых зарплата выше средней по всем вакансиям")
+            print("--- " * 15)
+            for row in rows:
+                print(
+                    f"Компания: {row[1]} "
+                    f"Вакансия: {row[2]} "
+                    f"Зарплата от {row[3]} до {row[4]} "
+                    f"URL: {row[5]} "
+                )
+
+            cur.close()
+            self.conn.close()
+
+    def get_vacancies_with_keyword(self, input_text: str) -> None:
+        """Функция поиска по шаблону, возвращает список всех вакансий,
+        в названии которых содержатся переданные в метод слова"""
+        self.connect_data_base()
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT * FROM vacancies " f" WHERE vacancies_name LIKE '%{input_text}%'")
+
+            rows = cur.fetchall()
+            print(f'Вакансии в названии которых содержатся "{input_text}"')
+            print("--- " * 15)
+            for row in rows:
+                if row[3] is None and row[4] is None:
+                    salary = "Зарплата не указана"
+                elif type(row[3]) is int and row[4] is None:
+                    salary = f"Зарплата от {row[3]}"
+                elif row[3] is None and type(row[4]) is int:
+                    salary = f"Зарплата до {row[4]}"
+                else:
+                    salary = f"Зарплата от {row[3]} до {row[4]}"
+                print(f"Компания: {row[1]} " f"Вакансия: {row[2]} " f"{salary} " f"URL: {row[5]} ")
+
+            cur.close()
+            self.conn.close()
 
 
-hh_api = HeadHunterAPI("Детский мир")
-s = hh_api.get_vacancies_from_employer_id()
-cadc = DBCreate(s)
-cadc.create_table()
-cadc.insert_table()
+# hh_api = HeadHunterAPI("Ростелеком")
+# s = hh_api.get_vacancies_from_employer_id()
+# cadc = DBCreate(s)
+# cadc.create_table()
+# cadc.insert_table()
+coc = DBManager()
+coc.get_vacancies_with_keyword("Аналитик")
