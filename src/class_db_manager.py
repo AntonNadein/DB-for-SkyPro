@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
+from dotenv import load_dotenv
 
 import psycopg2
-
-from src.class_get_API import HeadHunterAPI
+import os
 
 
 class ABCDataBase(ABC):
@@ -17,9 +17,21 @@ class ABCDataBase(ABC):
 class DataBase(ABCDataBase):
     """Класс для подключения к базе данных."""
 
+    def __init__(self):
+        load_dotenv()
+        self.host = os.getenv("DATABASE_HOST")
+        self.database = os.getenv("DATABASE_NAME")
+        self.user = os.getenv("DATABASE_USER")
+        self.password = os.getenv("DATABASE_PASSWORD")
+        self.port = 5432
+
     def connect_data_base(self) -> None:
         """Функция для создания подключения к базе данных"""
-        self.conn = psycopg2.connect(host="", database="", user="", password="")
+        self.conn = psycopg2.connect(host=self.host,
+                                     database=self.database,
+                                     user=self.user,
+                                     password=self.password,
+                                     port=self.port)
 
 
 class DBCreate(DataBase):
@@ -28,9 +40,10 @@ class DBCreate(DataBase):
     data: List[Dict[str, Any]]
 
     def __init__(self, data: List[Dict[str, Any]]) -> None:
+        super().__init__()
         self.data = data
 
-    def create_tabl(self) -> None:
+    def create_table(self) -> None:
         """Функция для создания таблицы в базе данных"""
         self.connect_data_base()
         with self.conn.cursor() as cur:
@@ -38,13 +51,12 @@ class DBCreate(DataBase):
             cur.execute("DROP TABLE IF EXISTS vacancies")
             cur.execute(
                 "CREATE TABLE vacancies"
-                "(vacancies_id int PRIMARY KEY,"
+                "(vacancies_id serial PRIMARY KEY,"
                 "company_name  varchar(100) NOT NULL,"
                 "vacancies_name  varchar(100) NOT NULL,"
                 "salary_from  int,"
                 "salary_to  int,"
-                "vacancies_url  varchar NOT NULL,"
-                "experience varchar(255));"
+                "vacancies_url  varchar NOT NULL);"
             )
             self.conn.commit()
             cur.close()
@@ -54,39 +66,33 @@ class DBCreate(DataBase):
         """Функция для наполнения таблицы данными с API HH.ru"""
         self.connect_data_base()
         with self.conn.cursor() as cur:
-            count = 1
             for item in self.data:
                 if item.get("salary") is None:
                     cur.execute(
-                        "INSERT INTO vacancies (vacancies_id, company_name, vacancies_name, "
-                        "salary_from, salary_to, vacancies_url, experience) "
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                        "INSERT INTO vacancies (company_name, vacancies_name, "
+                        "salary_from, salary_to, vacancies_url) "
+                        "VALUES (%s, %s, %s, %s, %s)",
                         (
-                            count,
                             item.get("employer").get("name"),
                             item.get("name"),
                             item.get("salary"),
                             item.get("salary"),
-                            item.get("alternate_url"),
-                            item.get("experience").get("name"),
+                            item.get("alternate_url")
                         ),
                     )
                 else:
                     cur.execute(
-                        "INSERT INTO vacancies (vacancies_id, company_name, vacancies_name, "
-                        "salary_from, salary_to, vacancies_url, experience) "
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                        "INSERT INTO vacancies (company_name, vacancies_name, "
+                        "salary_from, salary_to, vacancies_url) "
+                        "VALUES (%s, %s, %s, %s, %s)",
                         (
-                            count,
                             item.get("employer").get("name"),
                             item.get("name"),
                             item.get("salary").get("from"),
                             item.get("salary").get("to"),
-                            item.get("alternate_url"),
-                            item.get("experience").get("name"),
+                            item.get("alternate_url")
                         ),
                     )
-                count += 1
             self.conn.commit()
             cur.close()
             self.conn.close()
@@ -202,12 +208,3 @@ class DBManager(DataBase):
 
             cur.close()
             self.conn.close()
-
-
-# hh_api = HeadHunterAPI("Ростелеком")
-# s = hh_api.get_vacancies_from_employer_id()
-# cadc = DBCreate(s)
-# cadc.create_table()
-# cadc.insert_table()
-coc = DBManager()
-coc.get_vacancies_with_keyword("Аналитик")

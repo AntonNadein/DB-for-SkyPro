@@ -95,4 +95,4 @@ class HeadHunterAPI(ParserHH):
     @property
     def get_employer_list_id(self):
         """Функция вывода списка id найденых компаний"""
-        return self.__get_employer_list_id()
+        return self.list_id
