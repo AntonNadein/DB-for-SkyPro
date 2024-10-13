@@ -37,7 +37,7 @@ def selection_condition(
 
 
 def create_list(input_text):
-    """Функция получения списка из стоки делитель:',' """
+    """Функция получения списка из стоки делитель:','"""
     if ", " in input_text:
         create_list = input_text.split(", ")
         return create_list

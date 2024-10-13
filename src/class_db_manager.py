@@ -1,9 +1,9 @@
+import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
-from dotenv import load_dotenv
 
 import psycopg2
-import os
+from dotenv import load_dotenv
 
 
 class ABCDataBase(ABC):
@@ -27,11 +27,9 @@ class DataBase(ABCDataBase):
 
     def connect_data_base(self) -> None:
         """Функция для создания подключения к базе данных"""
-        self.conn = psycopg2.connect(host=self.host,
-                                     database=self.database,
-                                     user=self.user,
-                                     password=self.password,
-                                     port=self.port)
+        self.conn = psycopg2.connect(
+            host=self.host, database=self.database, user=self.user, password=self.password, port=self.port
+        )
 
 
 class DBCreate(DataBase):
@@ -77,7 +75,7 @@ class DBCreate(DataBase):
                             item.get("name"),
                             item.get("salary"),
                             item.get("salary"),
-                            item.get("alternate_url")
+                            item.get("alternate_url"),
                         ),
                     )
                 else:
@@ -90,7 +88,7 @@ class DBCreate(DataBase):
                             item.get("name"),
                             item.get("salary").get("from"),
                             item.get("salary").get("to"),
-                            item.get("alternate_url")
+                            item.get("alternate_url"),
                         ),
                     )
             self.conn.commit()

@@ -1,9 +1,6 @@
 from src.class_db_manager import DBCreate, DBManager
-from src.class_get_API import HeadHunterAPI
 from src.utils import create_list, selection_condition, creation_filling_data_base
 
-
-# дописать взаимодействие с пользователем и тесты
 
 def main():
     create_base = DBCreate('None')
@@ -30,7 +27,7 @@ def main():
                 "4 - Выводитсписок всех вакансий, у которых зарплата выше средней по всем вакансиям\n"
                 "5 - Выводит список всех вакансий, в названии которых содержатся искомое слово\n"
                 "0 - Для выхода из программы")
-        answer = selection_condition(text, "1", "2", "3","4","5")
+        answer = selection_condition(text, "1", "2", "3", "4", "5")
         if answer == "1":
             manage_base.get_companies_and_vacancies_count()
         elif answer == "2":
@@ -41,9 +38,9 @@ def main():
             manage_base.get_vacancies_with_higher_salary()
         elif answer == "5":
             text_2 = input("Введите текст для поиска\n"
-                              "Внимание поиск регистрозависим т.е.\n"
-                              "'Аналитик' и 'аналитик' это разные слова\n"
-                              ": ")
+                           "Внимание поиск регистрозависим т.е.\n"
+                           "'Аналитик' и 'аналитик' это разные слова\n"
+                           ": ")
             manage_base.get_vacancies_with_keyword(text_2)
         elif answer == "exit":
             break

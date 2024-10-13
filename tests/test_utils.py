@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.utils import selection_condition, create_list
+from src.utils import create_list, selection_condition
 
 
 class TestSelectionCondition(unittest.TestCase):
@@ -33,9 +33,9 @@ class TestSelectionCondition(unittest.TestCase):
 @pytest.mark.parametrize(
     "input_data, expected",
     [
-        ("1, 2", (['1', '2'])),
-        ("2,1", (['2', '1'])),
-        ("", ('')),
+        ("1, 2", (["1", "2"])),
+        ("2,1", (["2", "1"])),
+        ("", ("")),
         ("Текст без запятых", ("Текст без запятых")),
     ],
 )

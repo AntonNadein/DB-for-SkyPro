@@ -10,7 +10,7 @@ def test_hh_api():
     """тест экземпляров класса HeadHunterAPI"""
     hh_api = HeadHunterAPI("Python")
     assert hh_api.search_text == "Python"
-    assert hh_api.params == {'page': 0, 'per_page': 30, 'text': 'Python'}
+    assert hh_api.params == {"page": 0, "per_page": 30, "text": "Python"}
 
 
 @patch("requests.get")
@@ -22,7 +22,7 @@ def test_get_api_hh(mocked_get):
     result_1 = hh_api.get_vacancies_from_employer_id()
     result_2 = hh_api.get_employer_list_id
     assert result_1 == [{"id": "test1"}, {"id": "test2"}, {"id": "test1"}, {"id": "test2"}]
-    assert result_2 == ['test1', 'test2']
+    assert result_2 == ["test1", "test2"]
 
 
 def test_request_exception(parser_hh):
